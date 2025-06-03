@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+docs/
+node_modules/
+build/
+tmp/
+temp/
+src/resource
+uploads/
+.vs
+
+#dist/
