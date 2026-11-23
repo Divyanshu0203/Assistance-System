@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role
+  createdAt    DateTime  @default(now())
+  classes      Class[]
+  children     Student[]
+}
+
+model Class {
+  id        String    @id @default(cuid())
+  name      String
+  section   String    @default("")
+  teacherId String?
+  teacher   User?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  students  Student[]
+
+  @@unique([name, section])
+}
+
+model Student {
+  id          String       @id @default(cuid())
+  admissionNo String       @unique
+  name        String
+  classId     String?
+  class       Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
+  parentId    String?
+  parent      User?        @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  createdAt   DateTime     @default(now())
+  attendance  Attendance[]
+  marks       Mark[]
+  fees        Fee[]
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  studentId String
+  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date      DateTime         @db.Date
+  status    AttendanceStatus
+
+  @@unique([studentId, date])
+  @@index([date])
+}
+
+model Mark {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   String
+  exam      String
+  score     Float
+  maxScore  Float   @default(100)
+}
+
+model Fee {
+  id        String    @id @default(cuid())
+  studentId String
+  student   Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title     String
+  amount    Int
+  paid      Int       @default(0)
+  dueDate   DateTime? @db.Date
+}
